@@ -5,7 +5,10 @@ import pandas as pd
 import numpy as np
 from io import BytesIO
 
-API_URL = 'http://localhost:8000'
+import os
+
+# allow overriding the backend URL via environment variable
+API_URL = os.getenv('API_BASE_URL', 'http://localhost:8000')
 
 st.set_page_config(page_title='AI Business Risk & Sales Forecast', layout='wide')
 
