@@ -1,0 +1,9 @@
+[server]
+headless = true
+enableCORS = false       # backend already handles CORS
+enableXsrfProtection = false
+port = 8501              # default, overridden by CLI --server.port
+address = "0.0.0.0"
+
+[theme]
+primaryColor = "#1f77b4"

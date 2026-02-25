@@ -121,7 +121,7 @@ if __name__ == '__main__':
     if args.csv is None:
         # Generate a small synthetic dataset for quick demo
         print('No CSV provided, generating synthetic demo dataset: demo_sales.csv')
-        dates = pd.date_range(end=pd.Timestamp.today(), periods=36, freq='ME')
+        dates = pd.date_range(end=pd.Timestamp.today(), periods=36, freq='M')
         revenue = (1000 + (np.arange(len(dates)) * 10) + np.random.normal(0, 50, len(dates))).round(2)
         demo = pd.DataFrame({'date': dates, 'revenue': revenue})
         demo.to_csv('demo_sales.csv', index=False)

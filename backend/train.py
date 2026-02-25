@@ -87,7 +87,7 @@ def train_and_save(csv_path: str, models_dir: str = 'models') -> None:
 if __name__ == '__main__':
     # Generate demo data
     print("Generating synthetic demo dataset...")
-    dates = pd.date_range(end=pd.Timestamp.today(), periods=36, freq='ME')
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=36, freq='M')
     revenue = (1000 + (np.arange(len(dates)) * 10) + np.random.normal(0, 50, len(dates))).round(2)
     demo = pd.DataFrame({'date': dates, 'revenue': revenue})
     csv_path = 'demo_sales.csv'

@@ -187,7 +187,7 @@ if uploaded is not None:
                 future_dates = pd.date_range(
                     last_date + pd.offsets.MonthEnd(1),
                     periods=len(forecast_data),
-                    freq='ME'
+                    freq='M'
                 )
                 
                 fut_df = pd.DataFrame({
