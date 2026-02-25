@@ -4,6 +4,12 @@ import requests
 import pandas as pd
 import numpy as np
 from io import BytesIO
+from fastapi import FastAPI
+
+# Expose a minimal FastAPI `app` object so platforms that look for an
+# ASGI application (or run health checks) can discover it when serving
+# the frontend. This does not interfere with Streamlit execution.
+app = FastAPI(title="AI Business Risk & Sales Forecasting")
 
 API_URL = "https://ai-forecast-backend1.onrender.com"
 
