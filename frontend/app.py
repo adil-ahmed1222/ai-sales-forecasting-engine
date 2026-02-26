@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 import numpy as np
 from io import BytesIO
+import time
 from fastapi import FastAPI
 
 # Expose a minimal FastAPI `app` object so platforms that look for an
@@ -12,6 +13,55 @@ from fastapi import FastAPI
 app = FastAPI(title="AI Business Risk & Sales Forecasting")
 
 API_URL = "https://ai-forecast-backend1.onrender.com"
+
+
+def call_backend(endpoint, file_bytes):
+    """Post a file to ``/endpoint`` on the backend and return JSON.
+
+    The function handles Render's cold-start behaviour by retrying up to
+    three times when the response is not JSON. If the ``Content-Type``
+    header does not start with ``application/json`` we assume the
+    service is still waking up and pause 5 seconds before trying again.
+
+    Parameters
+    ----------
+    endpoint : str
+        Path portion (eg. ``"forecast"`` or ``"risk"``) without leading
+        slash.
+    file_bytes : bytes
+        The raw contents of the uploaded CSV file.
+
+    Returns
+    -------
+    dict or None
+        Parsed JSON from the backend, or ``None`` when all retries fail.
+    """
+    url = f"{API_URL}/{endpoint}"
+
+    for attempt in range(3):
+        try:
+            response = requests.post(
+                url,
+                files={"file": ("upload.csv", file_bytes)},
+                timeout=10,
+            )
+
+            content_type = response.headers.get("content-type", "")
+
+            if content_type.startswith("application/json"):
+                return response.json()
+            else:
+                # probably an HTML page from Render during cold start
+                st.info("⏳ Waking up server, please wait...")
+                time.sleep(5)
+
+        except Exception:
+            # any network error or timeout also triggers a retry
+            st.info("⏳ Waking up server, please wait...")
+            time.sleep(5)
+
+    st.error("⚠️ Server is starting. Please try again in a moment.")
+    return None
 
 st.set_page_config(page_title='AI Business Risk & Sales Forecast', layout='wide')
 
@@ -97,34 +147,21 @@ if uploaded is not None:
             # Get Forecast
             if forecast_clicked or both_clicked:
                 with st.spinner('🔄 Forecasting next 3 months revenue...'):
-                    files = {'file': ('upload.csv', uploaded.getvalue())}
-                    try:
-                        resp = requests.post(f'{API_URL}/forecast', files=files, timeout=10)
-                        if resp.status_code == 200:
-                            forecast_data = resp.json().get('predictions', [])
-                            st.success('✅ Forecast complete')
-                        else:
-                            st.error(f'❌ Forecast error: {resp.text}')
-                    except requests.exceptions.ConnectionError:
-                        st.error('❌ Backend not running. Start with:\n`python -m uvicorn ai_business_forecasting.backend.main:APP --reload --port 8000`')
-                    except Exception as e:
-                        st.error(f'❌ Error: {e}')
+                    json_resp = call_backend('forecast', uploaded.getvalue())
+                    if json_resp is not None:
+                        # successful call_backend already displayed any info
+                        forecast_data = json_resp.get('predictions', [])
+                        st.success('✅ Forecast complete')
+                    # otherwise error message is shown by call_backend
             
             # Get Risk
             if risk_clicked or both_clicked:
                 with st.spinner('⚙️ Analyzing business risk...'):
-                    files = {'file': ('upload.csv', uploaded.getvalue())}
-                    try:
-                        resp = requests.post(f'{API_URL}/risk', files=files, timeout=10)
-                        if resp.status_code == 200:
-                            risk_data = resp.json().get('risk')
-                            st.success('✅ Risk assessment complete')
-                        else:
-                            st.error(f'❌ Risk error: {resp.text}')
-                    except requests.exceptions.ConnectionError:
-                        st.error('❌ Backend not running. Start with:\n`python -m uvicorn ai_business_forecasting.backend.main:APP --reload --port 8000`')
-                    except Exception as e:
-                        st.error(f'❌ Error: {e}')
+                    json_resp = call_backend('risk', uploaded.getvalue())
+                    if json_resp is not None:
+                        risk_data = json_resp.get('risk')
+                        st.success('✅ Risk assessment complete')
+                    # call_backend handles retries and error messaging
             
             st.markdown("---")
             
